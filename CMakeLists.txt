@@ -62,6 +62,14 @@ IF (BROTLI_DEC_FOUND AND BROTLI_ENC_FOUND)
     LIST(APPEND CORE_EXTRA_LIBS ${BROTLI_DEC_LIBRARIES} ${BROTLI_ENC_LIBRARIES})
 ENDIF ()
 
+FIND_PACKAGE(OpenSSL)
+IF (OPENSSL_FOUND AND NOT (OPENSSL_VERSION VERSION_LESS "1.0.1"))
+ELSE ()
+    LIST(APPEND PICOTLS_EXTRA_FILES picotlsvs/picotls/wintimeofday.c)
+    # winsock2 for inet_pton()
+    LIST(APPEND PICOTLS_EXTRA_LIBS ws2_32) 
+ENDIF ()
+
 ADD_LIBRARY(picotls-core ${CORE_FILES})
 TARGET_LINK_LIBRARIES(picotls-core ${CORE_EXTRA_LIBS})
 ADD_LIBRARY(picotls-minicrypto
@@ -78,6 +86,7 @@ ADD_LIBRARY(picotls-minicrypto
     lib/ffx.c)
 TARGET_LINK_LIBRARIES(picotls-minicrypto picotls-core)
 ADD_EXECUTABLE(test-minicrypto.t
+    ${PICOTLS_EXTRA_FILES}
     ${MINICRYPTO_LIBRARY_FILES}
     deps/picotest/picotest.c
     ${CORE_TEST_FILES}
@@ -90,10 +99,10 @@ ADD_EXECUTABLE(test-minicrypto.t
     lib/cifra/aes128.c
     lib/cifra/aes256.c
     lib/cifra/random.c)
+TARGET_LINK_LIBRARIES(test-minicrypto.t ${PICOTLS_EXTRA_LIBS})
 
 SET(TEST_EXES test-minicrypto.t)
 
-FIND_PACKAGE(OpenSSL)
 IF (OPENSSL_FOUND AND NOT (OPENSSL_VERSION VERSION_LESS "1.0.1"))
     MESSAGE(STATUS "  Enabling OpenSSL support")
     INCLUDE_DIRECTORIES(${OPENSSL_INCLUDE_DIR})
@@ -129,6 +138,11 @@ IF (OPENSSL_FOUND AND NOT (OPENSSL_VERSION VERSION_LESS "1.0.1"))
     SET(TEST_EXES ${TEST_EXES} test-openssl.t)
 ELSE ()
     MESSAGE(WARNING "Disabling OpenSSL support (requires 1.0.1 or newer)")
+
+    IF (MINGW)
+        # wincompat.h
+        INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/picotlsvs/picotls)
+    ENDIF ()
 ENDIF ()
 
 ADD_CUSTOM_TARGET(check env BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR} prove --exec '' -v ${CMAKE_CURRENT_BINARY_DIR}/*.t t/*.t WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DEPENDS ${TEST_EXES} cli)

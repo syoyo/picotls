@@ -3,9 +3,13 @@
 
 #include <stdint.h>
 #define ssize_t int
-#include <Winsock2.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #include <malloc.h>
+
+#ifdef __MINGW32__
+#define O_CLOEXEC 0
+#endif
 
 #ifndef gettimeofday
 #define gettimeofday wintimeofday

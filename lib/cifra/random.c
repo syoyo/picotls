@@ -26,7 +26,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _WINDOWS
+#if defined(_WINDOWS) || defined(__MINGW32__)
 #include "wincompat.h"
 #else
 #include <unistd.h>
