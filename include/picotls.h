@@ -733,9 +733,11 @@ typedef enum en_ptls_early_data_acceptance_t {
  * optional arguments to client-driven handshake
  */
 #ifdef _WINDOWS
+#ifdef _MSC_VER
 /* suppress warning C4201: nonstandard extension used: nameless struct/union */
 #pragma warning(push)
 #pragma warning(disable : 4201)
+#endif
 #endif
 typedef struct st_ptls_handshake_properties_t {
     union {
@@ -818,7 +820,9 @@ typedef struct st_ptls_handshake_properties_t {
     int (*collected_extensions)(ptls_t *tls, struct st_ptls_handshake_properties_t *properties, ptls_raw_extension_t *extensions);
 } ptls_handshake_properties_t;
 #ifdef _WINDOWS
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 #endif
 
 /**

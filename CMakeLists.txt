@@ -66,12 +66,16 @@ FIND_PACKAGE(OpenSSL)
 IF (OPENSSL_FOUND AND NOT (OPENSSL_VERSION VERSION_LESS "1.0.1"))
 ELSE ()
     LIST(APPEND PICOTLS_EXTRA_FILES picotlsvs/picotls/wintimeofday.c)
-    # winsock2 for inet_pton()
-    LIST(APPEND PICOTLS_EXTRA_LIBS ws2_32) 
+    # winsock2 and Bcrypt
+    LIST(APPEND PICOTLS_EXTRA_LIBS ws2_32 bcrypt)
 ENDIF ()
 
 ADD_LIBRARY(picotls-core ${CORE_FILES})
 TARGET_LINK_LIBRARIES(picotls-core ${CORE_EXTRA_LIBS})
+IF (MSVC OR MINGW)
+    # __CRT__NO_INLINE is required to avoid multiple definition of imaxabs
+    SET_TARGET_PROPERTIES(picotls-core PROPERTIES COMPILE_FLAGS "-D_WINDOWS -D__CRT__NO_INLINE=1")
+ENDIF (MSVC OR MINGW)
 ADD_LIBRARY(picotls-minicrypto
     ${MINICRYPTO_LIBRARY_FILES}
     lib/cifra.c
@@ -85,6 +89,10 @@ ADD_LIBRARY(picotls-minicrypto
     lib/asn1.c
     lib/ffx.c)
 TARGET_LINK_LIBRARIES(picotls-minicrypto picotls-core)
+IF (MSVC OR MINGW)
+    SET_TARGET_PROPERTIES(picotls-minicrypto PROPERTIES COMPILE_FLAGS "-D_WINDOWS -D__CRT__NO_INLINE=1")
+ENDIF (MSVC OR MINGW)
+
 ADD_EXECUTABLE(test-minicrypto.t
     ${PICOTLS_EXTRA_FILES}
     ${MINICRYPTO_LIBRARY_FILES}
@@ -100,6 +108,9 @@ ADD_EXECUTABLE(test-minicrypto.t
     lib/cifra/aes256.c
     lib/cifra/random.c)
 TARGET_LINK_LIBRARIES(test-minicrypto.t ${PICOTLS_EXTRA_LIBS})
+IF (MSVC OR MINGW)
+    SET_TARGET_PROPERTIES(test-minicrypto.t PROPERTIES COMPILE_FLAGS "-D_WINDOWS -D__CRT__NO_INLINE=1")
+ENDIF (MSVC OR MINGW)
 
 SET(TEST_EXES test-minicrypto.t)
 

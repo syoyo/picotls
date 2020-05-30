@@ -24,7 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if defined(_WINDOWS) || defined(__MINGW32__)
+#if defined(_WINDOWS)
+#include <ws2tcpip.h>
 #include "wincompat.h"
 #else
 #include <arpa/inet.h>
@@ -5460,6 +5461,15 @@ ptls_esni_secret_t *ptls_get_esni_secret(ptls_t *ctx)
  */
 int ptls_server_name_is_ipaddr(const char *name)
 {
+    /* Older MinGW header does not have inet_pton(InetPton) function signature,
+     * so MinGW compiler may report implicit function definition warning, but should be ok
+     * TODO: define inet_pton function signature.
+     */
+#if defined(__MINGW32__) && defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-function-declaration"
+#endif
+
 #ifdef AF_INET
     struct sockaddr_in sin;
     if (inet_pton(AF_INET, name, &sin) == 1)
@@ -5470,6 +5480,11 @@ int ptls_server_name_is_ipaddr(const char *name)
     if (inet_pton(AF_INET6, name, &sin6) == 1)
         return 1;
 #endif
+
+#if defined(__MINGW32__) && defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
     return 0;
 }
 
